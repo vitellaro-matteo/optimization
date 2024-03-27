@@ -5,6 +5,8 @@ import torchvision
 import torchvision.transforms as transforms
 from Client import NeuralNetwork, Client
 import random
+import threading
+import concurrent.futures
 
 NBR_OF_CLIENTS = 5
 
@@ -27,7 +29,7 @@ def main():
         clients.append(client)
         
     for client in clients:
-        client.work(clients, clients[leader_id])
+        client.start_training(clients, clients[leader_id])
     
 if __name__ == "__main__":
     main()
