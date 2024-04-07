@@ -2,9 +2,9 @@ class node
 	int id
 	node[] neigbhours
 	boolean head = false
-	double weight = randomNumber(neigbhours.size, 0)
-	double max = nodes.size
-	double min = 0
+	double weight = randomNumber(k, 0)
+	double max = 0
+	double min = k
 
 node[] nodes = [all]
 for int i = 0;i >= roundup(nodes.size*0,3); i++

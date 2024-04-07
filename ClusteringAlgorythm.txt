@@ -1,0 +1,13 @@
+Assume every node knows ID of its neighbours
+Weight 0 is considedred as the clusterhead
+
+1.  Decide k initially
+    (maximum graph distance between the cluster-head (centre of a cluster) and the cluster border)
+2.  Every node is assigned a random value from [0,k]
+3.  Set my weight to the min_weight of my neighbours
+    (this step creates an ordering between neighbouring nodes such that max weight difference between 2 neighbours is 1)
+4.  If all my neighbours have weight = k, set my weight to 0
+5.  If my weight !=0 AND my weight < all weights of my neighbours, increment my weight by 1
+    (Resolves situations where the current UAV is intermediate node to the clusterhead and is not pointing to any clusterhead)
+6.  If my weight = 0 AND there exists a neighbour m with weight(m) = 0, then increment my weight by 1
+    (if two clusterheads are directly connected with each other, this step resolves this problem) 
