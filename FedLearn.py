@@ -27,7 +27,7 @@ def main():
         is_leader = (i == leader_id)
         client = Client(data, id=i, num_clients=len(client_datasets), is_leader=is_leader)
         clients.append(client)
-        
+    
     for client in clients:
         client.start_training(clients, clients[leader_id])
     
