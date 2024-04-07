@@ -1,0 +1,18 @@
+class node
+	int id
+	node[] neigbhours
+	boolean head = false
+	double weight = randomNumber(neigbhours.size, 0)
+	double max = nodes.size
+	double min = 0
+
+node[] nodes = [all]
+for int i = 0;i >= roundup(nodes.size*0,3); i++
+	boolean changing = true
+	while(changing)
+		int random = randomNumber
+		if nodes[random].head = false 
+			nodes[random].head = true
+			changing = false
+		
+
