@@ -1,6 +1,5 @@
 import numpy as np
 import random
-import time
 
 class UAV:
     def __init__(self, id):
@@ -11,7 +10,7 @@ class UAV:
     def add_neighbor(self, neighbor):
         self.neighbours.append(neighbor)
 
-def generateNeighbourMatrix(numberOfUavs,rows,cols):
+def generateNeighbourMatrix(n,rows,cols):
     adjacencyIdMatrix = np.zeros((rows, cols), dtype=int)
     num = 1
     for i in range(rows):
@@ -42,13 +41,12 @@ def khop_clustering(nodes, k, numberOfUavs):
     # Steps 2-6: Iterate until convergence
     converged = False
     counter = 1
-    start_time = time.time()
     while not converged:
         print("counter", counter)
         for node in nodes:
             print("Node:", node.id, "Weight:", node.weight, "Neighbours:", [neighbour.id for neighbour in node.neighbours])
 
-        # converged = True
+        converged = True
         for node in nodes:
             print("beginning of for loop")
             print("Node:", node.id, "Weight:", node.weight, "Neighbours:", [neighbour.id for neighbour in node.neighbours])
@@ -90,25 +88,28 @@ def khop_clustering(nodes, k, numberOfUavs):
                 print("Node:", node.id, "Weight:", node.weight, "Neighbours:", [neighbour.id for neighbour in node.neighbours])
                 continue
 
+            
+                
+        
         clusterheadCount = countClusterheads(nodes)
-        if (clusterheadCount >= np.ceil(np.sqrt(numberOfUavs)) and (clusterheadCount < np.ceil(numberOfUavs / 2))) and node.weight == 0 and (node.weight != 0 and any(neighbor.weight == 0 for neighbor in node.neighbours) for node in nodes):
-            converged = True
-        else: 
-            converged = False
+        if clusterheadCount >= np.ceil(np.sqrt(numberOfUavs)):
+            for node in reversed(nodes):
+                if node.weight == 0 and any(neighbor.weight == 0 for neighbor in node.neighbours):
+                    node.weight += 1
+                    continue
+            clusterheadCount = countClusterheads(nodes)
+            if clusterheadCount < np.ceil(np.sqrt(numberOfUavs)):
+                converged = False
+            else:
+                converged = True
+                break
             
 
         counter += 1
-        end_time = time.time()
-        if end_time - start_time >= 5:
-            print("NO convergence ")
-            break
-            
-
     return nodes
 
-
 # Example usage
-def main():
+if __name__ == "__main__":
     # Set k
     k = 3
     numberOfUavs = 9
@@ -155,7 +156,3 @@ def main():
     print("After clustering")
     for node in clustered_nodes:
         print("Node:", node.id, "Weight:", node.weight, "Neighbours:", [neighbour.id for neighbour in node.neighbours])
-
-
-if __name__ == "__main__":
-    main()
