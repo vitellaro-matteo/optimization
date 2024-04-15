@@ -8,6 +8,7 @@ import threading
 from threading import Event
 from queue import Queue
 from collections import namedtuple
+import copy
 
 # namedtuple for messages with sender information
 Message = namedtuple("Message", ["sender", "content"])
@@ -50,39 +51,46 @@ class Client(threading.Thread):
         self.clients = None
         
         self.message_queue = Queue()
+        self.stopping_event = Event()
             
     def start_training(self, clients, leader):
         self.clients = clients
         self.leader = leader
-        print(f"Starting training for client {self.id} with leader {leader.id}")
+        print(f"Starting training client {self.id} with leader {leader.id}")
         self.start()
 
     # sends a message to another client
     def send_message(self, recipient, content):
         message = Message(sender=self.id, content=content)
         recipient.receive_message(message)
-        print(f"Client {self.id} sending message to Client {recipient.id}")
 
     # receives a message
     def receive_message(self, message):
-        self.message_queue.put(message)
-        self.handle_messages()
-        
-    # handles received messages
-    def handle_messages(self):
-        while not self.message_queue.empty():
-            message = self.message_queue.get()
-            sender, content = message
-            if content == "global_model":
-                self.receive_global_model(self.leader.local_model)
-            elif content == "local_model" and self.is_leader:
-                # might be a problem with sender type
-                self.receive_local_model(sender, self.clients[sender].local_model)
-                
+        sender, content = message
+        if content == "global_model":
+            self.receive_global_model(self.leader.local_model)
+        elif content == "local_model" and self.is_leader:
+            self.receive_local_model(sender, self.clients[sender].local_model)
+        elif content == "STOP":
+            self.handle_stop_training_message()
 
     # non-leader clients uptate their local model with a global model
     def receive_global_model(self, global_model):
         self.local_model.load_state_dict(global_model.state_dict())
+        print("Client ", self.id, " has received new global model")
+        self.stopping_event.set()
+        self.stopping_event.clear()
+    
+    def handle_stop_training_message(self):
+        event.set()
+        print(event.set(), ", Client ", self.id)
+        print(f"Client {self.id} received stop training message. Stopping training.")
+        self.stopping_event.set()
+        self.stopping_event.clear()
+        
+    def send_stop_message(self):
+        for client in self.clients:
+            self.send_message(client, "STOP")
 
     # main training loop
     def train_local_model(self, num_epochs=EPOCHS):
@@ -111,18 +119,16 @@ class Client(threading.Thread):
                     loss_change = abs(self.loss_history[-1] - self.loss_history[-2])
                     if loss_change < STOPPING_THRESHOLD:
                         print("Loss change is below threshold. Stopping training.")
-                        return self.local_model.state_dict()
+        self.send_message(self.leader, "local_model")
+        if self.id != self.leader.id:
+            self.stopping_event.wait()
         return self.local_model.state_dict()
 
     # to let client know total number of clients, may be used later
     def set_num_clients(self, num_clients):
         self.num_clients = num_clients
-
-    def send_local_model(self, leader):
-        print(self.id + " sent local model: " + self.local_model.state_dict())
-        leader.receive_local_model(self.local_model.state_dict())
             
-    # For leader, receives all local models before calling aggregate and update global model
+    # for leader, receives all local models before calling aggregate and update global model
     def receive_local_model(self, client_id, model_update):
         if self.is_leader:
             self.message_queue.put((client_id, model_update))
@@ -130,24 +136,24 @@ class Client(threading.Thread):
             if self.message_queue.qsize() == self.num_clients:
                 self.aggregate_and_update_global_model()
                 
-    # based on nbr of total clients, the global model is averaged out
     def aggregate_and_update_global_model(self):
         if self.is_leader:
-            aggregated_weights = {}
+            aggregated_weights = copy.deepcopy(self.local_model)
+            num_updates = 0
             while not self.message_queue.empty():
-                client_id, model_update = self.model_updates.get()
-                for key in model_update.keys():
-                    if key not in aggregated_weights:
-                        aggregated_weights[key] = model_update[key]
-                    else:
-                        aggregated_weights[key] += model_update[key]
+                _, model_update = self.message_queue.get()
+                num_updates += 1
+                # updates the parameters of the aggregated model with the parameters from the model update
+                for param, update_param in zip(aggregated_weights.parameters(), model_update.parameters()):
+                    param.data.add_(update_param.data)  # adds the parameters of the model update to the aggregated model's parameters
+            # averages the parameters of the aggregated model
+            for param in aggregated_weights.parameters():
+                param.data.div_(num_updates)  # divides the parameters of the aggregated model by the number of updates to compute the average
+            # updates the local model with the aggregated weights
+            self.local_model.load_state_dict(aggregated_weights.state_dict())
+            for client in self.clients:
+                self.send_message(client, "global_model")
 
-            # average over the aggregated weights
-            for key in aggregated_weights.keys():
-                aggregated_weights[key] /= self.num_clients
-            # the leading node's local model is the global model
-            self.local_model.load_state_dict(aggregated_weights)
-            
     # the leader's model is broadcast and adapted by all other clients
     def broadcast_global_model(self, leader, clients):
         global_model = leader.local_model.state_dict()
@@ -155,7 +161,9 @@ class Client(threading.Thread):
         for client in clients:
             if client.id != leader.id:
                 client.receive_global_model(global_model)
-                
+        if self.check_stopping_criterion():
+            self.send_stop_message()
+        
     def check_stopping_criterion(self):
         if(event.is_set()):
             return True
@@ -165,8 +173,6 @@ class Client(threading.Thread):
         return False
 
     def run(self):
-        self.handle_messages()  # handle received messages
-        
         if self.is_leader:
             # Leader client performs the following steps:
             # 1. Train the local model
@@ -176,14 +182,9 @@ class Client(threading.Thread):
             # 5. If stopping criterion is not met, broadcasts the global model to all other clients
             # 6. If stopping criterion is met, stop training
             
-            while not self.check_stopping_criterion():
+            while not event.is_set():
                 self.train_local_model()
-                self.send_message(self.leader, "local_model")
-                for client in self.clients:
-                    if client != self:
-                        self.send_message(client, "global_model")  # broadcast global model to other clients
-                if self.check_stopping_criterion():
-                    event.set()
+                if event.is_set():
                     break
 
         else:
@@ -195,6 +196,5 @@ class Client(threading.Thread):
             
             while not event.is_set():
                 self.train_local_model()
-                self.send_message(self.leader, "local_model")  # Send local model to leader
                 if event.is_set():
                     break

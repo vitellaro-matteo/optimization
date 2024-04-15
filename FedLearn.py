@@ -5,8 +5,6 @@ import torchvision
 import torchvision.transforms as transforms
 from Client import NeuralNetwork, Client
 import random
-import threading
-import concurrent.futures
 
 NBR_OF_CLIENTS = 5
 
