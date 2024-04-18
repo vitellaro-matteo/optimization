@@ -36,6 +36,31 @@ def printUavs(uavs):
         neighbor_ids = [neighbor.id for neighbor in uav.neighbors]
         print(f"UAV ID: {uav.id}, Weight: {uav.weight}, Neighbors: {neighbor_ids}")
 
+def uavGraph(uavs,index,k):
+    plt.figure(figsize=(8, 8))
+    for uav in uavs:
+        if uav.weight == k:
+            plt.plot(uav.position[0], uav.position[1], 'ro', markersize=18)  # Plot UAVs
+        else:
+            plt.plot(uav.position[0], uav.position[1], 'bo', markersize=15)  # Plot UAVs
+        plt.text(uav.position[0], uav.position[1], str(uav.id), fontsize=12, ha='center', va='center', color = 'white')  # Add node ID
+        plt.text(uav.position[0], uav.position[1] - 0.9, str(k - uav.weight), fontsize=8, ha='center', va='bottom', color='black')  # Add node weight
+        # plt.text(uav.position[0], uav.position[1], f'{uav.weight:.1f}', fontsize=8, ha='center', va='center', color='white')  # Add node weight inside the point
+        for neighbor in uav.neighbors:
+            if index == 0:
+                plt.plot([uav.position[0], neighbor.position[0]], [uav.position[1], neighbor.position[1]], 'k--')  # Plot communication links
+            elif index == 1:
+                if abs(uav.weight - neighbor.weight) == 1:
+                    plt.plot([uav.position[0], neighbor.position[0]], [uav.position[1], neighbor.position[1]], 'k--')  # Plot communication links
+                
+
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    plt.title('UAV Communication Network')
+    plt.grid(True)
+    plt.axis('equal')
+    plt.show()
+
 def khop_clustering(uavs, k, num_uavs):
     converged = False
     counter = 1
@@ -96,7 +121,7 @@ def khop_clustering(uavs, k, num_uavs):
 
 # Generate a list of UAV objects
 def main():
-    num_uavs = 10
+    num_uavs = 30
     communication_radius = 3
     k = 3
     uavs = [UAV(id+1, random.randint(0, k)) for id in range(num_uavs)]
@@ -109,24 +134,13 @@ def main():
     print("Initial configuration")
     printUavs(uavs)
     print("======================================================================================================================")
-    plt.figure(figsize=(8, 8))
-    for uav in uavs:
-        plt.plot(uav.position[0], uav.position[1], 'bo', markersize=10)  # Plot UAVs
-        plt.text(uav.position[0], uav.position[1], str(uav.id), fontsize=12, ha='center', va='center')  # Add node ID
-        # plt.text(uav.position[0], uav.position[1], f'{uav.weight:.1f}', fontsize=8, ha='center', va='center', color='white')  # Add node weight inside the point
-        for neighbor in uav.neighbors:
-            plt.plot([uav.position[0], neighbor.position[0]], [uav.position[1], neighbor.position[1]], 'k--')  # Plot communication links
-
-    plt.xlabel('X')
-    plt.ylabel('Y')
-    plt.title('UAV Communication Network')
-    plt.grid(True)
-    plt.axis('equal')
-    plt.show()
+    
+    uavGraph(uavs,0,k)
 
     clustered_nodes = khop_clustering(uavs,k,num_uavs)
     printUavs(clustered_nodes)
-
+    
+    uavGraph(clustered_nodes,1,k)
 
 if __name__ == "__main__":
     main()
