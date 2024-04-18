@@ -25,9 +25,10 @@ def main():
         is_leader = (i == leader_id)
         client = Client(data, id=i, num_clients=len(client_datasets), is_leader=is_leader)
         clients.append(client)
-        
+    
+    print("Leader is: ", leader_id)
     for client in clients:
-        client.work(clients, clients[leader_id])
+        client.start_training(clients, clients[leader_id])
     
 if __name__ == "__main__":
     main()
