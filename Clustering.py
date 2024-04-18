@@ -11,7 +11,7 @@ class UAV:
 
     def generate_random_point(self):
         """Generate a random point in 2D space."""
-        return (random.uniform(-10, 10), random.uniform(0, 10))
+        return (random.uniform(0, 10), random.uniform(0, 10))
 
     def distance(self, other_uav):
         """Calculate the Euclidean distance between this UAV and another UAV."""
@@ -44,7 +44,7 @@ def uavGraph(uavs,index,k):
         else:
             plt.plot(uav.position[0], uav.position[1], 'bo', markersize=15)  # Plot UAVs
         plt.text(uav.position[0], uav.position[1], str(uav.id), fontsize=12, ha='center', va='center', color = 'white')  # Add node ID
-        plt.text(uav.position[0], uav.position[1] - 0.9, str(k - uav.weight), fontsize=8, ha='center', va='bottom', color='black')  # Add node weight
+        plt.text(uav.position[0], uav.position[1] - 0.4, str(k - uav.weight), fontsize=8, ha='center', va='bottom', color='black')  # Add node weight
         # plt.text(uav.position[0], uav.position[1], f'{uav.weight:.1f}', fontsize=8, ha='center', va='center', color='white')  # Add node weight inside the point
         for neighbor in uav.neighbors:
             if index == 0:
@@ -52,8 +52,6 @@ def uavGraph(uavs,index,k):
             elif index == 1:
                 if abs(uav.weight - neighbor.weight) == 1:
                     plt.plot([uav.position[0], neighbor.position[0]], [uav.position[1], neighbor.position[1]], 'k--')  # Plot communication links
-                
-
     plt.xlabel('X')
     plt.ylabel('Y')
     plt.title('UAV Communication Network')
