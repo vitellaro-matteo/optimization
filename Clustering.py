@@ -48,10 +48,10 @@ def uavGraph(uavs,index,k):
         # plt.text(uav.position[0], uav.position[1], f'{uav.weight:.1f}', fontsize=8, ha='center', va='center', color='white')  # Add node weight inside the point
         for neighbor in uav.neighbors:
             if index == 0:
-                plt.plot([uav.position[0], neighbor.position[0]], [uav.position[1], neighbor.position[1]], 'k--')  # Plot communication links
+                plt.plot([uav.position[0], neighbor.position[0]], [uav.position[1], neighbor.position[1]], 'k-')  # Plot communication links
             elif index == 1:
                 if abs(uav.weight - neighbor.weight) == 1:
-                    plt.plot([uav.position[0], neighbor.position[0]], [uav.position[1], neighbor.position[1]], 'k--')  # Plot communication links
+                    plt.plot([uav.position[0], neighbor.position[0]], [uav.position[1], neighbor.position[1]], 'k-')  # Plot communication links
     plt.xlabel('X')
     plt.ylabel('Y')
     plt.title('UAV Communication Network')
