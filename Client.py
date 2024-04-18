@@ -79,14 +79,13 @@ class Client(threading.Thread):
     def receive_global_model(self, global_model):
         self.local_model.load_state_dict(global_model.state_dict())
         # print("Client ", self.id, " has received new global model")
-        self.stopping_event.set()
-        self.stopping_event.clear()
+        if(not event.is_set()):
+            self.stopping_event.set()
     
     def handle_stop_training_message(self):
         event.set()
-        # print(f"Client {self.id} received stop training message. Stopping training.")
+        print(f"Client {self.id} received stop training message. Stopping training.")
         self.stopping_event.set()
-        self.stopping_event.clear()
         
     def send_stop_message(self):
         for client in self.clients:
@@ -107,12 +106,14 @@ class Client(threading.Thread):
                 loss = self.criterion(outputs, labels)
                 loss.backward()
                 self.optimizer.step()
+
                 running_loss += loss.item()
                 
             # average loss for the epoch
             self.epoch_loss = running_loss / len(train_loader)
-            # print(f"Client {self.id}, Epoch {epoch+1}/{num_epochs}, Loss: {self.epoch_loss}")
+            print(f"Client {self.id}, Epoch {epoch+1}/{num_epochs}, Loss: {self.epoch_loss}")
             
+        self.stopping_event.clear()
         self.send_message(self.leader, "local_model")
         self.stopping_event.wait()
         return event.is_set()
@@ -125,7 +126,7 @@ class Client(threading.Thread):
     def receive_local_model(self, client_id, model_update, epoch_loss):
         if self.is_leader:
             self.message_queue.put((client_id, model_update, epoch_loss))
-            # print('Number of received local models:', self.message_queue.qsize(), '/', self.num_clients)
+            print('Number of received local models:', self.message_queue.qsize(), '/', self.num_clients)
             if self.message_queue.qsize() == self.num_clients:
                 self.aggregate_and_update_global_model()
                 
@@ -146,11 +147,9 @@ class Client(threading.Thread):
             average_loss = total_loss / self.num_clients
             print("Average loss: ", average_loss)
 
-            # updates local model with the aggregated weights
-            self.local_model.load_state_dict(aggregated_weights.state_dict())
-
             # sends the updated model to all clients
-            self.broadcast_global_model(self, self.clients)
+            if not event.is_set():
+                self.broadcast_global_model(self, self.clients)
 
             # adds the average loss of the aggregated model    
             self.loss_history.append(average_loss)
@@ -158,12 +157,11 @@ class Client(threading.Thread):
     # the leader's model is broadcast and adapted by all other clients
     def broadcast_global_model(self, leader, clients):
         global_model = leader.local_model
-        print('Leader node broadcasts model')
-        for client in clients:
-            if client.id != leader.id:
-                client.receive_global_model(global_model)
         if self.check_stopping_criterion():
             self.send_stop_message()
+        print('Leader node broadcasts model')
+        for client in clients:
+            client.receive_global_model(global_model)
         
     def check_stopping_criterion(self):
         if(event.is_set()):
@@ -171,34 +169,14 @@ class Client(threading.Thread):
         if len(self.loss_history) > 1:
             loss_change = abs(self.loss_history[-1] - self.loss_history[-2])
             print("Stopping threshold is reached, loss change is ", loss_change)
-            return loss_change < STOPPING_THRESHOLD
+            if loss_change < STOPPING_THRESHOLD:
+                event.set()
+                return True
         return False
 
     def run(self):
-        if self.is_leader:
-            # Leader client performs the following steps:
-            # 1. Train the local model
-            # 2. Receives local models from all other clients
-            # 3. Aggregates and updates the global model
-            # 4. Checks the stopping criterion
-            # 5. If stopping criterion is not met, broadcasts the global model to all other clients
-            # 6. If stopping criterion is met, stop training
-            
-            while not event.is_set():
-                test = self.train_local_model()
-                print(test)
-                if event.is_set():
-                    break
-
-        else:
-            # Non-leader clients perform the following steps:
-            # 1. Train the local model
-            # 2. Send the local model update to the leader
-            # 3. Receive the global model from the leader
-            # 4. Repeat until the stopping criterion is met
-            
-            while not event.is_set():
-                test = self.train_local_model()
-                print(test)
-                if event.is_set():
-                    break
+        while not event.is_set():
+            test = self.train_local_model()
+            # print(test)
+            if event.is_set():
+                break
