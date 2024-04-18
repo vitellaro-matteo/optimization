@@ -34,12 +34,70 @@ class UAV:
 def printUavs(uavs):
     for uav in uavs:
         neighbor_ids = [neighbor.id for neighbor in uav.neighbors]
-        print(f"UAV ID: {uav.id}, Neighbors: {neighbor_ids}")
+        print(f"UAV ID: {uav.id}, Weight: {uav.weight}, Neighbors: {neighbor_ids}")
+
+def khop_clustering(uavs, k, num_uavs):
+    converged = False
+    counter = 1
+    while not converged:
+        prevUavConfig = uavs
+        print("counter", counter)
+        printUavs(uavs)
+        print("======================================================================================================================")
+        converged = True
+        for uav in uavs:
+
+            if uav.neighbors:
+                max_neighbor_weight = max(neighbor.weight for neighbor in uav.neighbors)
+            else:
+                max_neighbor_weight = 0
+
+            if (max_neighbor_weight > uav.weight) and (uav.weight != (max_neighbor_weight - 1)):
+                print("first if")
+                print(uav.id)
+                uav.weight = max_neighbor_weight - 1
+                converged = False
+                continue
+
+            if (max_neighbor_weight == 0) and (uav.weight == 0):
+                print("second if")
+                uav.weight = k
+                converged = False
+                continue
+
+            if (max_neighbor_weight <= uav.weight) and uav.weight != k:
+                print("3 if")
+                uav.weight -= 1
+                converged = False
+                continue
+            
+            if (max_neighbor_weight == k) and (uav.weight == k):
+                print("4 if")
+                uav.weight -= 1
+                converged = False
+                continue
+        
+        # check_counter = 0
+        # for cur,prev in zip(uavs,prevUavConfig):
+        #     print("current weight", cur.weight)
+        #     print("previous weight", prev.weight)
+        #     if cur.weight == prev.weight:
+        #         check_counter +=1
+        
+        # print("check_counter",check_counter)
+        # print("num_uavs", num_uavs)
+        # if check_counter == num_uavs:
+        #     converged = True
+
+        counter+=1
+
+    return uavs
+
 
 # Generate a list of UAV objects
 def main():
-    num_uavs = 5
-    communication_radius = 6
+    num_uavs = 10
+    communication_radius = 3
     k = 3
     uavs = [UAV(id+1, random.randint(0, k)) for id in range(num_uavs)]
 
@@ -48,8 +106,9 @@ def main():
         uav.update_neighbors(uavs, communication_radius)
         uav.delete_self_neighbors()
 
+    print("Initial configuration")
     printUavs(uavs)
-
+    print("======================================================================================================================")
     plt.figure(figsize=(8, 8))
     for uav in uavs:
         plt.plot(uav.position[0], uav.position[1], 'bo', markersize=10)  # Plot UAVs
@@ -64,6 +123,10 @@ def main():
     plt.grid(True)
     plt.axis('equal')
     plt.show()
+
+    clustered_nodes = khop_clustering(uavs,k,num_uavs)
+    printUavs(clustered_nodes)
+
 
 if __name__ == "__main__":
     main()
