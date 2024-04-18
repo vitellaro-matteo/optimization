@@ -1,0 +1,19 @@
+class node
+id
+neigbhours = []
+weight = randomNumber(k, 0)
+
+def clustering(k = 1):
+	min = weight
+	for x in neighbours:
+		if x.weight < min:
+			min = x.weight
+	if all(x.weight == k) for x in neighbours:
+		weight = 0
+	elif weight != 0 and weight == min:
+		weight += 1
+	elif weight == 0 and min == 0:
+		weight += 1
+	else:
+		weight = min
+
