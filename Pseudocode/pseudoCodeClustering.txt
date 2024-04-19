@@ -1,0 +1,21 @@
+class UAVnode:
+	id
+	position
+	neigbhours = []
+	weight = randomNumber(k, 0)
+
+def clustering(k):
+	MAX = k
+	MIN = 0
+	max_neighbor_weight = max(weight)
+	for uav in UAVnodes:
+		if (max_neighbor_weight > uav.weight) and (uav.weight != (max_neighbor_weight - 1)):
+			uav.weight = max_neighbor_weight - 1
+		else if (max_neighbor_weight == MIN) and (uav.weight == MIN):
+			uav.weight = MAX
+		else if (max_neighbor_weight <= uav.weight) and uav.weight != MAX:
+			uav.weight -= 1
+		else if (max_neighbor_weight == k) and (uav.weight == MAX):
+			uav.weight -= 1
+		else:
+			weight = MAX
