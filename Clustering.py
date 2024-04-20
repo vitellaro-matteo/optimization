@@ -1,6 +1,7 @@
 import random
 import math
 import matplotlib.pyplot as plt
+import copy
 
 class UAV:
     def __init__(self, id, weight):
@@ -99,23 +100,47 @@ def khop_clustering(uavs, k, num_uavs):
                 uav.weight -= 1
                 converged = False
                 continue
-        
-        # check_counter = 0
-        # for cur,prev in zip(uavs,prevUavConfig):
-        #     print("current weight", cur.weight)
-        #     print("previous weight", prev.weight)
-        #     if cur.weight == prev.weight:
-        #         check_counter +=1
-        
-        # print("check_counter",check_counter)
-        # print("num_uavs", num_uavs)
-        # if check_counter == num_uavs:
-        #     converged = True
 
         counter+=1
 
     return uavs
 
+
+def cleanClusterInformation(finalClusters):
+    modifiedClusters = {}
+    for key, value in finalClusters.items():
+        modified_list = []
+        for sublist in value:
+            modified_sublist = [node for node in sublist if node != key]
+            modified_list.extend(modified_sublist)
+        modifiedClusters[key] = modified_list
+    return modifiedClusters
+
+def getClusterInformation(uavs,k):
+    clusters = {}
+    uavClusterHeads = [uav for uav in uavs if uav.weight == k]
+    print("Cluster Heads:")
+    printUavs(uavClusterHeads)
+    for head in uavClusterHeads:
+        visited = set()
+        visited_nodes = []
+        clusterTraversal(head, k, visited,visited_nodes)
+
+        # Initialize the list if it doesn't exist yet
+        if head.id not in clusters:
+            clusters[head.id] = []
+
+        clusters[head.id].append(visited_nodes)
+
+    finalClusters = cleanClusterInformation(clusters)
+    return finalClusters
+
+def clusterTraversal(node, k, visited, visited_nodes):
+    visited.add(node.id)
+    visited_nodes.append(node.id)
+    for neighbor in node.neighbors:
+        if neighbor.weight == node.weight - 1 and neighbor.id not in visited:
+            clusterTraversal(neighbor,k, visited, visited_nodes)
 
 # Generate a list of UAV objects
 def main():
@@ -137,8 +162,14 @@ def main():
 
     clustered_nodes = khop_clustering(uavs,k,num_uavs)
     printUavs(clustered_nodes)
-    
+
+    finalClusters = getClusterInformation(clustered_nodes, k)
+    print("Final Clusters:")
+    print(finalClusters)
+
     uavGraph(clustered_nodes,1,k)
+
+    return clustered_nodes,finalClusters
 
 if __name__ == "__main__":
     main()
