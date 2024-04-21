@@ -1,0 +1,19 @@
+This file contains the approach to the project as well as the decision taken during development.
+
+Approach organized in tasks:
+  - The first task the group has done was gathering information regarding Federated Learning as well as clustering in mobile networks.
+  - The second task was to define our approach as well as the goal and evaluations of the project.
+  - The third task was implementing FLA.
+  - The fourth task was defining the clustering the group wanted to implement by creating a description of a clustering algorythm as well as writing a pseudocode of it.
+  - The fifth task was implementing the beforehand specified clustering.
+  - The sixth task was merging both the FLA and the clustering toghter.
+  - The seventh task was to run the newly created code on specific configurations which were beforehand defined.
+  - The eight task was to optimatise the newly code so that the previous runs could be improved.
+
+Devision taken during specific tasks:
+During the second task we decided the approach which is description above as well as our evaluation points which are to improve the convergence time of the FLA as well as the accuracy of the final ML-model of the UVAs. In the presention one can find also other evaluation points which we took in consideration.
+During the third task we encountered the problem that each node die one more epoch even thou the head gave the information of stopping the learning. 
+  - The problem was solved by ???
+During the fourth task we decided to creating a clustering algorythm based on the work of Brust et al.. The problem we faced during this task was defining a ending criteria but that was only a misinterpretation of our side of the work of Brust et al.
+During the fifth task we ecncountered the problem that the clustering algorythm didn't stop which was caused by the specified implementation wherer the clustering was test. The specified configuration was a 3 x 3 matrix and we assume that the neighbours of a node would only be considered by horizontal and vertical neighbours.
+  - This problem was solved by not simulating the configuration of the node in a 3x3 matrix but simulating the nodes in a map and representing the configuraion via a point-based graph.
