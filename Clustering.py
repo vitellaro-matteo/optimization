@@ -51,7 +51,7 @@ def uavGraph(uavs,index,k):
             if index == 0:
                 plt.plot([uav.position[0], neighbor.position[0]], [uav.position[1], neighbor.position[1]], 'k-')  # Plot communication links
             elif index == 1:
-                if abs(uav.weight - neighbor.weight) == 1:
+                if (uav.weight - neighbor.weight) == 1:
                     plt.plot([uav.position[0], neighbor.position[0]], [uav.position[1], neighbor.position[1]], 'k-')  # Plot communication links
     plt.xlabel('X')
     plt.ylabel('Y')
@@ -144,7 +144,7 @@ def clusterTraversal(node, k, visited, visited_nodes):
 
 # Generate a list of UAV objects
 def main():
-    num_uavs = 30
+    num_uavs = 25
     communication_radius = 3
     k = 3
     uavs = [UAV(id+1, random.randint(0, k)) for id in range(num_uavs)]
