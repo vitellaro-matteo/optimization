@@ -17,3 +17,10 @@ During the third task we encountered the problem that each node die one more epo
 During the fourth task we decided to creating a clustering algorythm based on the work of Brust et al.. The problem we faced during this task was defining a ending criteria but that was only a misinterpretation of our side of the work of Brust et al.
 During the fifth task we ecncountered the problem that the clustering algorythm didn't stop which was caused by the specified implementation wherer the clustering was test. The specified configuration was a 3 x 3 matrix and we assume that the neighbours of a node would only be considered by horizontal and vertical neighbours.
   - This problem was solved by not simulating the configuration of the node in a 3x3 matrix but simulating the nodes in a map and representing the configuraion via a point-based graph.
+
+
+References:
+1. Adaptive Multi-Hop Clustering in Mobile Networks [Brust et al.]
+2. Connectivity Stability in Autonomous Multi-level UAV Swarms for Wide Area Monitoring [Danoy et al.]
+3. Communication-Efficient Learning of Deep Networks from Decentralized Data [McMahan et al.]
+4. 
