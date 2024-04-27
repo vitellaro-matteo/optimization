@@ -10,11 +10,13 @@ Approach organized in tasks:
   - The seventh task was to run the newly created code on specific configurations which were beforehand defined.
   - The eight task was to optimatise the newly code so that the previous runs could be improved.
 
-Devision taken during specific tasks:
-During the second task we decided the approach which is description above as well as our evaluation points which are to improve the convergence time of the FLA as well as the accuracy of the final ML-model of the UVAs. In the presention one can find also other evaluation points which we took in consideration.
-During the third task we encountered the problem that each node die one more epoch even thou the head gave the information of stopping the learning. 
-  - The problem was solved by ???
-During the fourth task we decided to creating a clustering algorythm based on the work of Brust et al.. The problem we faced during this task was defining a ending criteria but that was only a misinterpretation of our side of the work of Brust et al.
+Decision taken during specific tasks:
+During the second task we decided the approach which is description above as well as our evaluation points which are to improve the convergence time of the FLA as well as the accuracy of the final ML-model of the UAVs. In the presention one can find also other evaluation points which we took in consideration.
+During the third task we encountered the problem that each node didn't wait for the leader his aggregation and the new weights but instead just restarted their learning. 
+  - The problem was solved by introducing local and global stopping events which allowed for a better controll of the learning of a node.
+During the third task we encountered also another problem where the comparision to the stopping threshhold of the leader didn't took into considiration the newely aggregated weights but instead only compared the average loss of the nodes.
+  - The problem was solved by reevaluating the newly aggregated weights and based on that loss the comparision should happen.
+During the fourth task we decided to creating a clustering algorythm based on the work of Danoy et al.. The problem we faced during this task was defining a ending criteria but that was only a misinterpretation of our side of the work of Danoy et al.
 During the fifth task we ecncountered the problem that the clustering algorythm didn't stop which was caused by the specified implementation wherer the clustering was test. The specified configuration was a 3 x 3 matrix and we assume that the neighbours of a node would only be considered by horizontal and vertical neighbours.
   - This problem was solved by not simulating the configuration of the node in a 3x3 matrix but simulating the nodes in a map and representing the configuraion via a point-based graph.
 
