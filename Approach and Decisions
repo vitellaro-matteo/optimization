@@ -16,13 +16,21 @@ During the third task we encountered the problem that each node didn't wait for 
   - The problem was solved by introducing local and global stopping events which allowed for a better controll of the learning of a node.
 During the third task we encountered also another problem where the comparision to the stopping threshhold of the leader didn't took into considiration the newely aggregated weights but instead only compared the average loss of the nodes.
   - The problem was solved by reevaluating the newly aggregated weights and based on that loss the comparision should happen.
-During the fourth task we decided to creating a clustering algorythm based on the work of Danoy et al.. The problem we faced during this task was defining a ending criteria but that was only a misinterpretation of our side of the work of Danoy et al.
+During the fifth task we decided to creating a clustering algorythm based on the work of Brust et al. but we faced a problem of having no convergence.
+  - The problem was solved by adding the following conditions 'if (max_neighbor_weight > uav.weight) and (uav.weight != (max_neighbor_weight - 1)):' and '(uav.weight != (max_neighbor_weight - 1)):' which are a modified version from the wikipedia site, see refernces.
+During the fifth task we also faced a problem that a node considered themselves as a neigbhour.
+  - The problem was solved by an seperated method which removes oneselves from the neighbour array.
+
+This needs to be checked:
 During the fifth task we ecncountered the problem that the clustering algorythm didn't stop which was caused by the specified implementation wherer the clustering was test. The specified configuration was a 3 x 3 matrix and we assume that the neighbours of a node would only be considered by horizontal and vertical neighbours.
   - This problem was solved by not simulating the configuration of the node in a 3x3 matrix but simulating the nodes in a map and representing the configuraion via a point-based graph.
+
+During the sixth task we got aware of the fact that it wasn't sufficient to only transmit the weights at the end of the clustering but the FLA also needed the cluster heads their ids as well as the ids of the neighbours.
+  - The problem was solved by adding the following three method: 'getClusterInformation', 'cleanClusterInformation', and 'clusterTraversal' which allowed to create a dictionary which contains the following information: the key is a cluster head and the content of that key is an array of the neighbours both in the format of the ids.
 
 
 References:
 1. Adaptive Multi-Hop Clustering in Mobile Networks [Brust et al.]
 2. Connectivity Stability in Autonomous Multi-level UAV Swarms for Wide Area Monitoring [Danoy et al.]
 3. Communication-Efficient Learning of Deep Networks from Decentralized Data [McMahan et al.]
-4. 
+4. https://en.wikipedia.org/wiki/KHOPCA_clustering_algorithm#:~:text=-hop%20clustering%20algorithm)%20provides%20a,to%20the%20applied%20distance%20function.
