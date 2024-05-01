@@ -35,7 +35,7 @@ class NeuralNetwork(nn.Module):
         return x
 
 class Client(threading.Thread):
-    def __init__(self, local_data, id, num_clients, is_leader=False):
+    def __init__(self, local_data, id, num_clients, leader, is_leader=False, other_leaders=None):
         super(Client, self).__init__()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.local_data = local_data
@@ -48,16 +48,17 @@ class Client(threading.Thread):
         self.is_leader = is_leader
         self.num_clients = num_clients
         self.id = id
-        self.leader = None
+        self.leader = leader
         self.clients = None
+        self.other_leaders = other_leaders if other_leaders is not None else []
+        self.received_leader_models = {}
         
         self.message_queue = Queue()
         self.stopping_event = Event()
+        self.leader_communication = Event()
             
-    def start_training(self, clients, leader):
+    def start_training(self, clients):
         self.clients = clients
-        self.leader = leader
-        # print(f"Starting training client {self.id} with leader {leader.id}")
         self.start()
 
     # sends a message to another client
@@ -71,9 +72,65 @@ class Client(threading.Thread):
         if content == "global_model":
             self.receive_global_model(self.leader.local_model)
         elif content == "local_model" and self.is_leader:
-            self.receive_local_model(sender, self.clients[sender].local_model, epoch_loss = self.epoch_loss)
+            for client in self.clients:
+                if client.id == sender:
+                    local_model = client.local_model
+                    break
+            self.receive_local_model(sender, local_model, epoch_loss = self.epoch_loss)
         elif content == "STOP":
             self.handle_stop_training_message()
+        elif content == "leader_model":
+            for leader in self.other_leaders:
+                if leader.id == sender:
+                    leader_model = leader.local_model
+                    break
+            self.receive_leader_model(sender, leader_model)
+            
+    def received_models_from_all_leaders(self):
+        for leader in self.other_leaders:
+            if leader.id not in self.received_models:
+                return False
+        return True
+            
+    def receive_leader_model(self, sender, leader_model):
+        self.receive_leader_models[sender] = leader_model
+        if self.received_models_from_all_leaders():
+            self.choose_best_model()
+            
+    def choose_best_model(self):
+        best_model_accuracy = -1
+        best_model = None
+
+        for sender, model in self.receive_leader_models.items():
+            accuracy = self.evaluate_model(model)
+            
+            if accuracy > best_model_accuracy:
+                best_model_accuracy = accuracy
+                best_model = model
+
+        if best_model is not None:
+            self.update_local_model(best_model)
+        else:
+            print("No models received from leaders")
+
+    def update_local_model(self, new_model):
+        self.local_model = new_model
+        self.leader_communication.set()
+        
+    def evaluate_model(self, model):
+        model.eval()
+        eval_loader = DataLoader(self.local_data, batch_size=BATCH_SIZE, shuffle=False)
+        correct = 0
+        total = 0
+        with torch.no_grad():
+            for inputs, labels in eval_loader:
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
+                outputs = self.local_model(inputs)
+                _, predicted = torch.max(outputs, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+        accuracy = correct / total if total != 0 else 0.0
+        return accuracy
 
     # non-leader clients uptate their local model with a global model
     def receive_global_model(self, global_model):
@@ -149,10 +206,17 @@ class Client(threading.Thread):
 
             # sends the updated model to all clients
             if not event.is_set():
+                self.leader_communication.clear()
+                self.broadcast_to_leaders()
+                self.leader_communication.wait()
                 self.broadcast_global_model(self, self.clients)
 
             # adds the average loss of the aggregated model    
             self.loss_history.append(average_loss)
+    
+    def broadcast_to_leaders(self):
+        for leader in self.other_leaders:
+            self.send_message(leader, "leader_model")
 
     # the leader's model is broadcast and adapted by all other clients
     def broadcast_global_model(self, leader, clients):
@@ -176,7 +240,6 @@ class Client(threading.Thread):
 
     def run(self):
         while not event.is_set():
-            test = self.train_local_model()
-            # print(test)
+            self.train_local_model()
             if event.is_set():
                 break
