@@ -142,6 +142,39 @@ def clusterTraversal(node, k, visited, visited_nodes):
         if neighbor.weight == node.weight - 1 and neighbor.id not in visited:
             clusterTraversal(neighbor,k, visited, visited_nodes)
 
+
+def return_solo_clusterhead(clusters):
+    
+    smallest_keys = {}
+
+    # Iterate over the dictionary items
+    for key, value in clusters.items():
+        # Iterate over the values
+        for item in value:
+            # If the item is already present in smallest_keys and the current key is smaller, update it
+            if item in smallest_keys and key < smallest_keys[item]:
+                smallest_keys[item] = key
+            # If the item is not present in smallest_keys, add it with the current key
+            elif item not in smallest_keys:
+                smallest_keys[item] = key
+
+    print("smallest_keys:", smallest_keys)
+    # Create a dictionary to store the result
+    result = {}
+
+    # Iterate over the dictionary items
+    for key, value in clusters.items():
+        # Iterate over the values
+        for item in value:
+            # If the smallest key for the current item matches the current key, add it to the result
+            if smallest_keys[item] == key:
+                if key not in result:
+                    result[key] = []
+                result[key].append(item)
+
+    print("result after resolving multiclusterhead issue", result)
+
+
 # Generate a list of UAV objects
 def cluster(num_uavs, communication_radius, k):
     uavs = [UAV(id+1, random.randint(0, k)) for id in range(num_uavs)]
@@ -163,6 +196,8 @@ def cluster(num_uavs, communication_radius, k):
     finalClusters = getClusterInformation(clustered_nodes, k)
     print("Final Clusters:")
     print(finalClusters)
+
+    finalClustersAfterRemovingDuplicateClusterheads = return_solo_clusterhead(finalClusters)
 
     uavGraph(clustered_nodes,1,k)
 
