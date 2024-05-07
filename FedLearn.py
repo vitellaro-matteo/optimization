@@ -7,8 +7,8 @@ from Client import NeuralNetwork, Client
 import random
 from Clustering import cluster
 
-NBR_OF_CLIENTS = 25
-COMMUNICATION_RADIUS = 3
+NBR_OF_CLIENTS = 5
+COMMUNICATION_RADIUS = 10
 K = 3
 
 def split_dataset():
@@ -21,40 +21,44 @@ def split_dataset():
     client_datasets = {}
     for i in range(NBR_OF_CLIENTS + 1):
         client_datasets[i] = torch.utils.data.Subset(train_dataset, [i])
-
     return client_datasets
 
 def main():
     clustered_nodes, final_clusters = cluster(NBR_OF_CLIENTS, COMMUNICATION_RADIUS, K)
     client_datasets = split_dataset()
     
-    all_clients = []
-    leaders = {}
+    leaders = []
+    clients = {}
+    for leader_id, clients_ids in final_clusters.items():
+        is_leader = True
+        leader = Client(client_datasets[leader_id], leader_id, len(clients_ids) + 1, None, is_leader)
+        leaders.append(leader)
+        clients[leader_id] = [leader]
+        
+        for client_id in clients_ids:
+            is_leader = False
+            client = Client(client_datasets[client_id], client_id, None, leader)
+            clients[leader_id].append(client)
     
-    for leader_id, cluster_members in final_clusters.items():
-        leader_data = client_datasets[leader_id]
-        
-        other_leader_ids = [other_leader_id for other_leader_id in final_clusters.keys() if other_leader_id != leader_id]
-        # TODO fix error here
-        other_leaders = [leaders[other_leader_id] for other_leader_id in other_leader_ids]
-        
-        leader = Client(leader_data, id=leader_id, num_clients=len(cluster_members) + 1, is_leader=True, other_leaders=other_leaders)
-        leaders[leader_id] = leader
-        
-        cluster_clients = [leader]
-        
-        for client_id in cluster_members:
-            if client_id != leader_id and client_id not in [client.id for client in all_clients]:
-                client_data = client_datasets[client_id]
-                client = Client(client_data, id=client_id, num_clients=len(cluster_members) + 1, is_leader=False, leader=leader)
-                cluster_clients.append(client)
-                all_clients.append(client)
-        
-        for client in cluster_clients:
-            client.start_training(cluster_clients)
+    # start training for each client
+    client_ids = {}
+    leader_ids = []
+    
+    for leader in leaders:
+        leader_ids.append(leader.id)
+        client_ids[leader.id] = []
+        for client in clients[leader.id]:
+            client_ids[leader.id].append(client.id)
 
-    for client in all_clients:
-        client.join()
+    for leader in leaders:
+        # print("Leader", leader.id, " has clients ", client_ids[leader.id], " and knows leaders ", leader_ids)
+        leader.start_training(clients[leader.id], leaders)
+
+    for leader_id, leader_clients in clients.items():
+        for client in leader_clients:
+            # print("Client", client.id, " has leader ", client.leader.id)
+            if client.id != leader_id:
+                client.start_training(None, None)
     
 if __name__ == "__main__":
     main()
