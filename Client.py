@@ -16,7 +16,7 @@ event = Event()
 
 # hyperparameters
 LEARNING_RATE = 0.01
-EPOCHS = 10
+EPOCHS = 3
 BATCH_SIZE = 32
 STOPPING_THRESHOLD = 0.1
 
@@ -55,15 +55,17 @@ class Client(threading.Thread):
         self.leader = leader if leader is not None else self
         self.clients = None
         self.leaders = None
+        self.leader_tests = None
         
         self.received_leader_models = Queue()
         self.message_queue = Queue()
         self.stopping_event = Event()
         self.leader_communication = Event()
             
-    def start_training(self, clients, leaders):
+    def start_training(self, clients, leaders, leader_tests):
         self.leaders = leaders if leaders is not None else []
         self.clients = clients if clients is not None else []
+        self.leader_tests = leader_tests if leader_tests is not None else []
         self.start()
 
     # sends a message to another client
@@ -98,6 +100,7 @@ class Client(threading.Thread):
             
     def receive_leader_model(self, sender, leader_model):
         self.received_leader_models.put((sender, leader_model))
+        safe_print(f"Leader {self.id} has received leader model {self.received_leader_models.qsize()} / {len(self.leaders)}")
         if self.received_leader_models.qsize() == len(self.leaders):
             self.aggregate_leader_models()
 
@@ -107,11 +110,9 @@ class Client(threading.Thread):
             for leader in self.leaders:
                 for _ in leader.clients:
                     total_clients += 1
-                    
             if total_clients == 0:
                 print("No clients available for aggregation.")
                 return
-            
             aggregated_weights = copy.deepcopy(self.local_model)
             # print(self.received_leader_models.qsize())
             while not self.received_leader_models.empty():
@@ -125,7 +126,7 @@ class Client(threading.Thread):
             
             # evaluates the loss of the aggregated model
             average_loss = self.evaluate_model(aggregated_weights)
-            safe_print("Average loss: ", average_loss)
+            safe_print("Average loss after leader aggregation: ", average_loss, " Leader: ", self.leader.id)
 
             if aggregated_weights is not None:
                 self.update_local_model(aggregated_weights)
@@ -138,18 +139,15 @@ class Client(threading.Thread):
         
     def evaluate_model(self, model):
         model.eval()
-        eval_loader = DataLoader(self.local_data, batch_size=BATCH_SIZE, shuffle=False)
+        eval_loader = DataLoader(self.leader_tests, batch_size=BATCH_SIZE, shuffle=True)
         total_loss = 0.0
-        num_batches = 0
         with torch.no_grad():
             for inputs, labels in eval_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 outputs = model(inputs)
                 loss = self.criterion(outputs, labels)
                 total_loss += loss.item()
-                num_batches += 1
-        average_loss = total_loss / num_batches if num_batches != 0 else 0.0
-        model.train()
+        average_loss = total_loss / len(eval_loader)
         return average_loss
 
     # non-leader clients uptate their local model with a global model
@@ -170,7 +168,7 @@ class Client(threading.Thread):
 
     # main training loop
     def train_local_model(self, num_epochs=EPOCHS):
-        # print("Client ", self.id, " started training.")
+        safe_print("Client ", self.id, " started training.")
         train_loader = DataLoader(self.local_data, batch_size=BATCH_SIZE, shuffle=True)
         self.local_model.train()
         for epoch in range(num_epochs):
@@ -184,9 +182,8 @@ class Client(threading.Thread):
                 self.optimizer.step()
                 running_loss += loss.item()
             # average loss for the epoch
-            self.epoch_loss = running_loss / len(train_loader)
-            safe_print(f"Client {self.id}, Epoch {epoch+1}/{num_epochs}, Loss: {self.epoch_loss}")
-            
+            self.epoch_loss = running_loss / len(train_loader.sampler)
+            safe_print(f"Client {self.id}, Leader {self.leader.id}, Epoch {epoch+1}/{num_epochs}, Loss: {self.epoch_loss}")
         self.stopping_event.clear()
         # print(self.leader.id)
         self.send_message(self.leader, "local_model")
@@ -219,7 +216,7 @@ class Client(threading.Thread):
             # evaluates the loss of the aggregated model
             average_loss = self.evaluate_model(aggregated_weights)
             self.local_model = aggregated_weights
-            safe_print("Average loss: ", average_loss)
+            safe_print("Average loss: ", average_loss, " Cluster with Leader: ", self.leader.id)
 
             # sends the updated model to all clients
             if not event.is_set():
@@ -233,6 +230,7 @@ class Client(threading.Thread):
     
     def broadcast_to_leaders(self):
         for leader in self.leaders:
+            safe_print("Leader: ", self.leader.id, " is sending global model.")
             self.send_message(leader, "leader_model")
 
     # the leader's model is broadcast and adapted by all other clients
@@ -240,7 +238,7 @@ class Client(threading.Thread):
         global_model = leader.local_model
         if self.check_stopping_criterion():
             self.send_stop_message()
-        # print('Leader node broadcasts model')
+        safe_print('Leader node broadcasts model')
         for client in clients:
             client.receive_global_model(global_model)
         

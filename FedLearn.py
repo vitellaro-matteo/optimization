@@ -7,8 +7,8 @@ from Client import NeuralNetwork, Client
 import random
 from Clustering import cluster
 
-NBR_OF_CLIENTS = 5
-COMMUNICATION_RADIUS = 10
+NBR_OF_CLIENTS = 20
+COMMUNICATION_RADIUS = 3
 K = 3
 
 def split_dataset():
@@ -18,14 +18,22 @@ def split_dataset():
     ])
 
     train_dataset = torchvision.datasets.MNIST(root='./data', train=True, transform=transform, download=True)
+    samples_per_client = len(train_dataset) // NBR_OF_CLIENTS + 1
     client_datasets = {}
+    
     for i in range(NBR_OF_CLIENTS + 1):
-        client_datasets[i] = torch.utils.data.Subset(train_dataset, [i])
-    return client_datasets
+        client_indices = random.choices(range(len(train_dataset)), k=samples_per_client)
+        client_datasets[i] = torch.utils.data.Subset(train_dataset, client_indices)
+    
+    
+    test_dataset = torchvision.datasets.MNIST(root='./data', train=False, transform=transform, download=True) 
+    indices = random.choices(range(len(test_dataset)), k=samples_per_client)   
+    leader_test = torch.utils.data.Subset(test_dataset, indices)
+    return client_datasets, leader_test
 
 def main():
     clustered_nodes, final_clusters = cluster(NBR_OF_CLIENTS, COMMUNICATION_RADIUS, K)
-    client_datasets = split_dataset()
+    client_datasets, leader_tests = split_dataset()
     
     leaders = []
     clients = {}
@@ -52,13 +60,13 @@ def main():
 
     for leader in leaders:
         # print("Leader", leader.id, " has clients ", client_ids[leader.id], " and knows leaders ", leader_ids)
-        leader.start_training(clients[leader.id], leaders)
+        leader.start_training(clients[leader.id], leaders, leader_tests)
 
     for leader_id, leader_clients in clients.items():
         for client in leader_clients:
             # print("Client", client.id, " has leader ", client.leader.id)
             if client.id != leader_id:
-                client.start_training(None, None)
+                client.start_training(None, None, None)
     
 if __name__ == "__main__":
     main()
