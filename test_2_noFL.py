@@ -9,9 +9,6 @@ import numpy as np
 from Client import NeuralNetwork, LEARNING_RATE, EPOCHS, BATCH_SIZE
 from FedLearn import NBR_OF_CLIENTS
 
-# Define the number of UAVs (clients)
-NUM_CLIENTS = NBR_OF_CLIENTS
-
 # Start of overall execution time
 start_time_overall = time.time()
 
@@ -30,8 +27,8 @@ np.random.shuffle(train_indices)
 np.random.shuffle(test_indices)
 
 # Split the shuffled indices into NUM_CLIENTS equal parts
-train_split_indices = np.array_split(train_indices, NUM_CLIENTS)
-test_split_indices = np.array_split(test_indices, NUM_CLIENTS)
+train_split_indices = np.array_split(train_indices, NBR_OF_CLIENTS)
+test_split_indices = np.array_split(test_indices, NBR_OF_CLIENTS)
 
 # Function to create DataLoader for a subset of data
 def get_data_loader(dataset, indices, batch_size):
@@ -77,7 +74,7 @@ for epoch in range(EPOCHS):
     end_time_train = time.time()
     total_time_train += (end_time_train - start_time_train)
     print(f"Training time for epoch {epoch+1}: {end_time_train - start_time_train} seconds")
-    print(f"Average training loss for epoch {epoch+1}: {total_epoch_loss / NUM_CLIENTS:.4f}")
+    print(f"Average training loss for epoch {epoch+1}: {total_epoch_loss / NBR_OF_CLIENTS:.4f}")
     
     prev_total_epoch_loss = total_epoch_loss
 
