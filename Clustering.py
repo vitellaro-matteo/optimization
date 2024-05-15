@@ -176,10 +176,7 @@ def return_solo_clusterhead(clusters):
 
 
 # Generate a list of UAV objects
-def main():
-    num_uavs = 25
-    communication_radius = 3
-    k = 3
+def cluster(num_uavs, communication_radius, k):
     uavs = [UAV(id+1, random.randint(0, k)) for id in range(num_uavs)]
 
     # Update neighbors for each UAV
@@ -204,9 +201,4 @@ def main():
 
     uavGraph(clustered_nodes,1,k)
 
-
-
-    return clustered_nodes,finalClusters,finalClustersAfterRemovingDuplicateClusterheads
-
-if __name__ == "__main__":
-    main()
+    return clustered_nodes, finalClusters, finalClustersAfterRemovingDuplicateClusterheads
