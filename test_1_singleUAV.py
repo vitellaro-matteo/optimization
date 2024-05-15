@@ -5,7 +5,7 @@ import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
-from Client import NeuralNetwork, LEARNING_RATE, EPOCHS, BATCH_SIZE, STOPPING_THRESHOLD
+from Client import NeuralNetwork, LEARNING_RATE, EPOCHS, BATCH_SIZE
 
 # Start of overall execution time
 start_time_overall = time.time()
@@ -56,14 +56,6 @@ for epoch in range(EPOCHS):
     epoch_loss = running_loss / len(trainloader)
     print(f"Epoch {epoch+1}/{EPOCHS}, Training loss: {epoch_loss}")
     loss_history.append(epoch_loss)
-
-    # Check stopping condition
-    if len(loss_history) > 1:
-        loss_change = abs(loss_history[-1] - loss_history[-2])
-        print("Loss change is ", loss_change)
-        if loss_change < STOPPING_THRESHOLD:
-            print("Stopping threshold is reached.")
-            break
         
 
 # Download and load the test data
