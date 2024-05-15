@@ -201,4 +201,4 @@ def cluster(num_uavs, communication_radius, k):
 
     uavGraph(clustered_nodes,1,k)
 
-    return clustered_nodes, finalClusters
+    return clustered_nodes, finalClusters, finalClustersAfterRemovingDuplicateClusterheads
