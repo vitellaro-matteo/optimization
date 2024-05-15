@@ -173,6 +173,8 @@ def return_solo_clusterhead(clusters):
                 result[key].append(item)
 
     print("result after resolving multiclusterhead issue", result)
+    
+    return result
 
 
 # Generate a list of UAV objects
