@@ -76,34 +76,30 @@ for epoch in range(EPOCHS):
     print(f"Training time for epoch {epoch+1}: {end_time_train - start_time_train} seconds")
     print(f"Average training loss for epoch {epoch+1}: {total_epoch_loss / NBR_OF_CLIENTS:.4f}")
     
-    prev_total_epoch_loss = total_epoch_loss
+    # Test the model for each client after the current epoch
+    correct_count_total, all_count_total = 0, 0
+    start_time_test = time.time()  # Initialize the start time for testing
+    for client_idx, client_loader in enumerate(client_test_loaders):
+        correct_count, all_count = 0, 0
+        for images, labels in client_loader:
+            images = images.view(images.size(0), -1)
+            images = images.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+            labels = labels.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+            with torch.no_grad():
+                output = model(images)
+                _, predicted = torch.max(output, 1)
+                all_count += labels.size(0)
+                correct_count += (predicted == labels).sum().item()
 
-# Test the model for each client
-correct_count_total, all_count_total = 0, 0
-start_time_test = time.time()
+        accuracy = correct_count / all_count
+        correct_count_total += correct_count
+        all_count_total += all_count
+        print(f"Client {client_idx+1}, Test Accuracy: {accuracy:.4f}")
 
-for client_idx, client_loader in enumerate(client_test_loaders):
-    correct_count, all_count = 0, 0
-    for images, labels in client_loader:
-        images = images.view(images.size(0), -1)
-        images = images.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
-        labels = labels.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
-        with torch.no_grad():
-            output = model(images)
-            _, predicted = torch.max(output, 1)
-            all_count += labels.size(0)
-            correct_count += (predicted == labels).sum().item()
+    end_time_test = time.time()  # End the time for testing
+    print(f"Overall Test Accuracy after epoch {epoch+1}: {(correct_count_total / all_count_total):.4f}")
+    print(f"Testing time after epoch {epoch+1}: {end_time_test - start_time_test} seconds")
 
-    accuracy = correct_count / all_count
-    correct_count_total += correct_count
-    all_count_total += all_count
-    print(f"Client {client_idx+1}, Test Accuracy: {accuracy:.4f}")
-
-print("\nNumber Of Images Tested =", all_count_total)
-print("Overall Model Accuracy =", (correct_count_total / all_count_total))
-
-end_time_test = time.time()
-print("\nTotal Training time:", total_time_train, "seconds")
-print(f"Testing time: {end_time_test - start_time_test} seconds")
 end_time_overall = time.time()
+print("\nTotal Training time:", total_time_train, "seconds")
 print(f"Overall execution time: {end_time_overall - start_time_overall} seconds")
