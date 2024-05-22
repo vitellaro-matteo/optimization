@@ -18,10 +18,10 @@ accuracy_dict = {}
 
 # hyperparameters
 LEARNING_RATE = 0.01
-EPOCHS = 3
+EPOCHS = 30
 BATCH_SIZE = 32
 STOPPING_THRESHOLD = 0.1
-NUM_ITERATIONS = 10
+NUM_ITERATIONS = 1
 
 def safe_print(*args, sep=" ", end="", **kwargs):
     joined_string = sep.join([ str(arg) for arg in args ])

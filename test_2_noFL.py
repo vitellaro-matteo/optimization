@@ -6,6 +6,7 @@ import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, Subset
 import numpy as np
+import matplotlib.pyplot as plt
 from Client import NeuralNetwork, LEARNING_RATE, EPOCHS, BATCH_SIZE
 from FedLearn import NBR_OF_CLIENTS
 
@@ -46,6 +47,10 @@ optimizer = optim.SGD(model.parameters(), lr=LEARNING_RATE)
 
 total_time_train = 0
 
+# Initialize lists to store training and testing accuracy for each client
+train_accuracy_history = [[] for _ in range(NBR_OF_CLIENTS)]
+test_accuracy_history = [[] for _ in range(NBR_OF_CLIENTS)]
+
 # Train the model on data from each client
 for epoch in range(EPOCHS):
     print(f"Epoch {epoch+1}/{EPOCHS}")
@@ -54,6 +59,8 @@ for epoch in range(EPOCHS):
     
     for client_idx, client_loader in enumerate(client_train_loaders):
         running_loss = 0
+        correct_count, all_count = 0, 0
+        
         for images, labels in client_loader:
             images = images.view(images.size(0), -1)
             images = images.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
@@ -66,10 +73,19 @@ for epoch in range(EPOCHS):
             optimizer.step()
 
             running_loss += loss.item()
-
+            
+            # Calculate training accuracy
+            with torch.no_grad():
+                _, predicted = torch.max(output, 1)
+                correct_count += (predicted == labels).sum().item()
+                all_count += labels.size(0)
+        
         average_loss = running_loss / len(client_loader)
         total_epoch_loss += average_loss
-        print(f"Client {client_idx+1}, Training loss: {average_loss:.4f}")
+        train_accuracy = correct_count / all_count
+        train_accuracy_history[client_idx].append(train_accuracy)
+        
+        print(f"Client {client_idx+1}, Training loss: {average_loss:.4f}, Training accuracy: {train_accuracy:.4f}")
 
     end_time_train = time.time()
     total_time_train += (end_time_train - start_time_train)
@@ -94,6 +110,7 @@ for epoch in range(EPOCHS):
         accuracy = correct_count / all_count
         correct_count_total += correct_count
         all_count_total += all_count
+        test_accuracy_history[client_idx].append(accuracy)
         print(f"Client {client_idx+1}, Test Accuracy: {accuracy:.4f}")
 
     end_time_test = time.time()  # End the time for testing
@@ -103,3 +120,13 @@ for epoch in range(EPOCHS):
 end_time_overall = time.time()
 print("\nTotal Training time:", total_time_train, "seconds")
 print(f"Overall execution time: {end_time_overall - start_time_overall} seconds")
+
+# Plot the training and testing accuracy for each client
+for client_idx in range(NBR_OF_CLIENTS):
+    plt.plot(range(1, EPOCHS+1), test_accuracy_history[client_idx], label=f'Client {client_idx+1} Testing Accuracy')
+
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.title('Testing Accuracy vs. Epoch for Each Client')
+plt.legend()
+plt.show()
