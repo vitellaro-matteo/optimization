@@ -183,7 +183,7 @@ class Client(threading.Thread):
                     aggregation_x_axis = list(range(3, 3 * (len(aggregation_values) + 1), 3))
                     plt.plot(aggregation_x_axis[:len(aggregation_values)], aggregation_values, marker='o', linestyle='-', color='r', label='Aggregation')
 
-            plt.xlabel('Steps')
+            plt.xlabel('Epochs')
             plt.ylabel('Accuracy')
             plt.title('Clustering with leader communication')
             plt.xticks(range(3, 3 * (len(x_axis_values) + 1), 3))  # x-ticks in steps of 3
