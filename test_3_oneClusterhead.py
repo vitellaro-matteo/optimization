@@ -3,9 +3,12 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 import torchvision
 import torchvision.transforms as transforms
-from Client import NeuralNetwork, Client
+from test3_client import NeuralNetwork, Client
 import random
 from Clustering import cluster
+
+leader_accuracy = {}
+client_accuracy = {}
 
 NBR_OF_CLIENTS = 20
 COMMUNICATION_RADIUS = 100
@@ -51,6 +54,7 @@ def main():
     leaders = []
     clients = {}
     
+    
     for leader_id in clusters:
         clients_ids = clusters[leader_id]
         is_leader = True
@@ -77,13 +81,17 @@ def main():
 
     # Start training for each leader
     for leader in leaders:
-        leader.start_training(clients[leader.id], leaders, leader_tests)
+        leader_accuracy = leader.start_training(clients[leader.id], leaders, leader_tests)
 
     # Start training for each client
     for leader_id, leader_clients in clients.items():
         for client in leader_clients:
             if client.id != leader_id:
-                client.start_training(None, None, None)
+                client_accuracy = client.start_training(None, None, None)
+                
+    print("Leader accuracy:",leader_accuracy)
+    print("Client accuracy:",client_accuracy)
+
     
 if __name__ == "__main__":
     main()
