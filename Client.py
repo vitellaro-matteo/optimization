@@ -18,10 +18,10 @@ accuracy_dict = {}
 
 # hyperparameters
 LEARNING_RATE = 0.01
-EPOCHS = 30
+EPOCHS = 3
 BATCH_SIZE = 32
 STOPPING_THRESHOLD = 0.1
-NUM_ITERATIONS = 1
+NUM_ITERATIONS = 10
 
 def safe_print(*args, sep=" ", end="", **kwargs):
     joined_string = sep.join([ str(arg) for arg in args ])
@@ -257,7 +257,7 @@ class Client(threading.Thread):
             # evaluates the loss of the aggregated model
             accuracy = self.evaluate_model(aggregated_weights, self.id)
             self.local_model = aggregated_weights
-            safe_print("Average loss: ", accuracy, " Cluster with Leader: ", self.leader.id)
+            safe_print("Average accuracy: ", accuracy, " Cluster with Leader: ", self.leader.id)
 
             # sends the updated model to all clients
             if not event.is_set():

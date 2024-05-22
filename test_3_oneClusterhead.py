@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-
 from torch.utils.data import DataLoader
 import torchvision
 import torchvision.transforms as transforms
@@ -9,7 +8,7 @@ import random
 from Clustering import cluster
 
 NBR_OF_CLIENTS = 20
-COMMUNICATION_RADIUS = 300
+COMMUNICATION_RADIUS = 100
 K = 3
 
 def split_dataset():
