@@ -108,7 +108,7 @@ average_train_accuracy = np.mean(all_train_accuracy_histories, axis=0)
 average_test_accuracy = np.mean(all_test_accuracy_histories, axis=0)
 
 # Plot the average testing accuracy
-plt.plot(range(1, EPOCHS+1), average_test_accuracy, label='Average Testing Accuracy')
+plt.plot(range(1, EPOCHS+1), average_test_accuracy, marker='o', linestyle='-', color='r', label='Average Testing Accuracy')
 plt.xlabel('Epoch')
 plt.ylabel('Accuracy')
 plt.title('Average Testing Accuracy vs. Epoch')

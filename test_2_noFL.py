@@ -155,7 +155,7 @@ average_test_accuracy = [np.mean(client_history, axis=0) for client_history in a
 
 # Plot the average testing accuracy for each client
 for client_idx in range(NBR_OF_CLIENTS):
-    plt.plot(range(1, EPOCHS+1), average_test_accuracy[client_idx], label=f'Client {client_idx+1} Avg. Testing Accuracy')
+    plt.plot(range(1, EPOCHS+1), average_test_accuracy[client_idx], marker='o', linestyle='-', label=f'Client {client_idx+1} Avg. Testing Accuracy')
 
 plt.xlabel('Epoch')
 plt.ylabel('Accuracy')
