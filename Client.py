@@ -9,7 +9,6 @@ from threading import Event
 from queue import Queue
 from collections import namedtuple
 import copy
-import matplotlib.pyplot as plt
 
 # namedtuple for messages with sender information
 Message = namedtuple("Message", ["sender", "content"])
@@ -132,8 +131,8 @@ class Client(threading.Thread):
                 param.data.div_(total_clients)
             
             # evaluates the loss of the aggregated model
-            average_loss = self.evaluate_model(aggregated_weights, 0)
-            safe_print("Average loss after leader aggregation: ", average_loss, " Leader: ", self.leader.id)
+            accuracy = self.evaluate_model(aggregated_weights, 0)
+            safe_print("Accuracy after leader aggregation: ", accuracy, " Leader: ", self.leader.id)
 
             if aggregated_weights is not None:
                 self.update_local_model(aggregated_weights)
@@ -168,28 +167,6 @@ class Client(threading.Thread):
                 total_predictions += labels.size(0)
         accuracy = correct_predictions / total_predictions
         return accuracy
-    
-    def plot_accuracy_graph(self):
-        if self.id == 1:
-            plt.figure()
-            x_axis_values = list(range(3, 3 * len(accuracy_dict[next(iter(accuracy_dict))]), 3))
-            print(accuracy_dict)
-            
-            for label in accuracy_dict:
-                if label != "Aggregation":
-                    plt.plot(x_axis_values[:len(accuracy_dict[label]) - 1], accuracy_dict[label][1:], marker='o', label=label)
-                else:
-                    aggregation_values = accuracy_dict[label][::len(self.leaders)]
-                    aggregation_x_axis = list(range(3, 3 * (len(aggregation_values) + 1), 3))
-                    plt.plot(aggregation_x_axis[:len(aggregation_values)], aggregation_values, marker='o', linestyle='-', color='r', label='Aggregation')
-
-            plt.xlabel('Epochs')
-            plt.ylabel('Accuracy')
-            plt.title('Clustering with leader communication')
-            plt.xticks(range(3, 3 * (len(x_axis_values) + 1), 3))  # x-ticks in steps of 3
-            plt.grid(True)
-            plt.legend()
-            plt.show()
 
     # non-leader clients uptate their local model with a global model
     def receive_global_model(self, global_model):
@@ -257,7 +234,7 @@ class Client(threading.Thread):
             # evaluates the loss of the aggregated model
             accuracy = self.evaluate_model(aggregated_weights, self.id)
             self.local_model = aggregated_weights
-            safe_print("Average accuracy: ", accuracy, " Cluster with Leader: ", self.leader.id)
+            safe_print("Accuracy: ", accuracy, " Cluster with Leader: ", self.leader.id)
 
             # sends the updated model to all clients
             if not event.is_set():
@@ -308,4 +285,3 @@ class Client(threading.Thread):
             self.train_local_model()
             if event.is_set():
                 break
-        self.plot_accuracy_graph()

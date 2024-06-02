@@ -5,7 +5,7 @@ import torchvision
 import torchvision.transforms as transforms
 from test3_client import NeuralNetwork, Client
 import random
-from Clustering import cluster
+from Clustering_copy import cluster
 
 leader_accuracy = {}
 client_accuracy = {}
